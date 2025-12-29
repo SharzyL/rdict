@@ -1,0 +1,37 @@
+name: Nix build and check
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  nix-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Run nix flake check
+        run: nix flake check
+
+      - name: Build with nix
+        run: nix build
+
+      - name: Check build output
+        run: ls -lh result/bin/
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Run clippy checks
+        run: nix develop --command cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run cargo fmt check
+        run: nix develop --command cargo fmt -- --check

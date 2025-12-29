@@ -1,0 +1,7 @@
+[api]
+base_url = "https://api.ohmygpt.com/v1"
+api_key = "sk-DTgAfNCHc77B3d91D46ET3BLBkFJ6742b1a468Da4F1797BE"
+model = "claude-sonnet-4-5"
+
+[ui]
+font_size = 16.0
