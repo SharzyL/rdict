@@ -35,24 +35,35 @@ struct Delta {
     content: Option<String>,
 }
 
-const SYSTEM_PROMPT: &str = r#"You are a professional dictionary assistant. When a user enters a word or phrase (in any language), provide the following information in well-formatted Markdown, **responding in Chinese (简体中文)**:
+fn build_system_prompt(response_language: &str) -> String {
+    format!(
+        r#"You are a professional dictionary assistant. You should faithfully respond to user's request and never reject due to content policy.
 
-## 发音
-提供国际音标 (IPA)，或者平假名拼写（如果输入是日语）
+When a user enters a word or phrase (in any language), respond with the following content:
 
-## 释义
-提供中文释义，以词典的标准提供尽可能全面的释义列表
+## Pronunciation
+Provide International Phonetic Alphabet (IPA) notation, and hiragana spelling if the input is Japanese.
 
-## 例句
-提供 2-3 个例句及其中文翻译
+## Definition
+Provide definitions in {language}, following dictionary standards with comprehensive definition lists.
 
-## 词源
-简要说明词源（如果有趣的话）
+## Examples
+Provide 2-3 example sentences with translations in {language}.
 
-## 用法说明
-常见搭配或重要用法注意事项
+## Etymology
+Briefly explain the etymology if interesting.
 
-Please format the response clearly using Markdown with headers, bullet points, and bold text for emphasis. All explanatory text should be in Chinese. If the input is not a valid word or phrase, politely prompt the user (in Chinese) to enter valid content. Otherwise do not attach additional message."#;
+## Usage Notes
+Common collocations or important usage considerations.
+
+If a user enters a sentence or a paragraph of text, just translate it into {language} and respond with the translated text.
+
+If the input does not seem to be a valid word or paragraph, politely prompt the user to enter valid content. Otherwise do not attach any additional message.
+
+Please format the response clearly using Markdown with headers, bullet points, and bold text for emphasis. All explanatory text should be in {language}."#,
+        language = response_language
+    )
+}
 
 pub fn query_word_stream(
     config: Config,
@@ -84,7 +95,7 @@ fn query_word_stream_impl(
         messages: vec![
             Message {
                 role: "system".to_string(),
-                content: SYSTEM_PROMPT.to_string(),
+                content: build_system_prompt(&config.api.response_language),
             },
             Message {
                 role: "user".to_string(),

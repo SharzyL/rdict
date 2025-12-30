@@ -6,8 +6,6 @@ use tracing::info;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub api: ApiConfig,
-    #[serde(default)]
-    pub ui: UiConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,28 +14,16 @@ pub struct ApiConfig {
     pub api_key: String,
     #[serde(default = "default_model")]
     pub model: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UiConfig {
-    #[serde(default = "default_font_size")]
-    pub font_size: f32,
+    #[serde(default = "default_response_language")]
+    pub response_language: String,
 }
 
 fn default_model() -> String {
-    "gpt-3.5-turbo".to_string()
+    "claude-haiku-4-5".to_string()
 }
 
-fn default_font_size() -> f32 {
-    16.0
-}
-
-impl Default for UiConfig {
-    fn default() -> Self {
-        Self {
-            font_size: default_font_size(),
-        }
-    }
+fn default_response_language() -> String {
+    "Chinese".to_string()
 }
 
 impl Config {
@@ -86,8 +72,8 @@ impl Default for Config {
                 base_url: "https://api.openai.com/v1".to_string(),
                 api_key: "your-api-key-here".to_string(),
                 model: default_model(),
+                response_language: default_response_language(),
             },
-            ui: UiConfig::default(),
         }
     }
 }

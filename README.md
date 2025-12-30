@@ -41,11 +41,16 @@ Configuration is stored in `~/.config/rdict/config.toml`:
 [api]
 base_url = "https://api.openai.com/v1"
 api_key = "your-api-key-here"
-model = "gpt-3.5-turbo"
-
-[ui]
-font_size = 16.0
+model = "claude-haiku-4-5"
+response_language = "Chinese"
 ```
+
+### Configuration Options
+
+- `api.base_url` - OpenAI-compatible API endpoint (default: `https://api.openai.com/v1`)
+- `api.api_key` - Your API key for authentication
+- `api.model` - Model to use for dictionary lookups (default: `claude-haiku-4-5`)
+- `api.response_language` - Language for dictionary responses (default: `Chinese`). Can be set to any language (e.g., `English`, `Japanese`, `Spanish`, etc.)
 
 ## Development
 

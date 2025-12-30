@@ -11,6 +11,7 @@ pub struct RDictApp {
     input_word: String,
     result: String,
     is_loading: bool,
+    is_debug: bool,
     error_message: Option<String>,
     result_receiver: Option<Receiver<Result<String>>>,
     markdown_cache: CommonMarkCache,
@@ -18,12 +19,13 @@ pub struct RDictApp {
 }
 
 impl RDictApp {
-    pub fn new(config: Config, initial_word: String) -> Self {
+    pub fn new(config: Config, is_debug: bool, initial_word: String) -> Self {
         let mut app = Self {
             config,
             input_word: initial_word.clone(),
             result: String::new(),
             is_loading: false,
+            is_debug: is_debug,
             error_message: None,
             result_receiver: None,
             markdown_cache: CommonMarkCache::default(),
@@ -74,7 +76,6 @@ impl RDictApp {
                     Ok(result) => {
                         match result {
                             Ok(content) => {
-                                debug!("Received streaming update, {} bytes", content.len());
                                 self.result = content;
                                 self.error_message = None;
                                 // Keep is_loading true to continue receiving updates
@@ -94,7 +95,6 @@ impl RDictApp {
                     }
                     Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                         // Stream ended normally
-                        debug!("Stream completed");
                         self.is_loading = false;
                         self.result_receiver = None;
                         break;
@@ -115,87 +115,72 @@ impl eframe::App for RDictApp {
             ctx.request_repaint();
         }
 
+        if self.is_debug {
+            ctx.set_debug_on_hover(true);
+        }
+
         // Main panel
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // Title bar
-            ui.horizontal(|ui| {
-                ui.heading("RDict");
-            });
+        egui::CentralPanel::default()
+            .frame(egui::Frame::central_panel(&ctx.style()).inner_margin(egui::Margin::same(12)))
+            .show(ctx, |ui| {
+                // Input area
+                ui.horizontal(|ui| {
+                    let text_edit = egui::TextEdit::singleline(&mut self.input_word)
+                        .hint_text("Enter word to query...");
 
-            ui.separator();
+                    let query = ui.add_sized([ui.available_width() - 70.0, 24.0], text_edit);
 
-            // Input area
-            ui.horizontal(|ui| {
-                let mut text_edit = egui::TextEdit::singleline(&mut self.input_word)
-                    .hint_text("Enter word to query...");
+                    // Request focus on first frame
+                    if self.first_frame {
+                        query.request_focus();
+                        self.first_frame = false;
+                    }
 
-                // Auto-focus on first frame
-                if self.first_frame {
-                    text_edit = text_edit.desired_width(f32::INFINITY);
-                }
+                    // Query on Enter key
+                    if query.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        self.start_query();
+                    }
 
-                let response = ui.add_sized([ui.available_width() - 70.0, 24.0], text_edit);
-
-                // Request focus on first frame
-                if self.first_frame {
-                    response.request_focus();
-                    self.first_frame = false;
-                }
-
-                // Query on Enter key
-                if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    self.start_query();
-                }
-
-                let button_enabled = !self.is_loading && !self.input_word.trim().is_empty();
-                if ui
-                    .add_enabled(button_enabled, egui::Button::new("Query"))
-                    .clicked()
-                {
-                    self.start_query();
-                }
-            });
-
-            ui.add_space(10.0);
-
-            // Error message
-            if let Some(error) = &self.error_message {
-                ui.colored_label(egui::Color32::RED, format!("Error: {}", error));
-            }
-
-            ui.separator();
-
-            // Result display area
-            egui::ScrollArea::vertical()
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    if !self.result.is_empty() {
-                        CommonMarkViewer::new().show(ui, &mut self.markdown_cache, &self.result);
-                    } else if !self.is_loading && self.error_message.is_none() {
-                        ui.vertical_centered(|ui| {
-                            ui.add_space(50.0);
-                            ui.label("Enter a word and click Query, or press Enter");
-                            if !self.config.api.api_key.starts_with("sk-") {
-                                ui.add_space(10.0);
-                                ui.colored_label(
-                                    egui::Color32::YELLOW,
-                                    "Please click Settings to configure your API Key",
-                                );
-                            }
-                        });
+                    let button_enabled = !self.is_loading && !self.input_word.trim().is_empty();
+                    if ui
+                        .add_enabled(button_enabled, egui::Button::new("Query"))
+                        .clicked()
+                    {
+                        self.start_query();
                     }
                 });
 
-            // Status display at bottom
-            if self.is_loading {
-                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    ui.add_space(8.0);
-                    ui.horizontal(|ui| {
-                        ui.spinner();
-                        ui.label("Querying...");
+                // Error message
+                if let Some(error) = &self.error_message {
+                    ui.colored_label(egui::Color32::RED, format!("Error: {}", error));
+                }
+
+                ui.separator();
+
+                // Result display area
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        if !self.result.is_empty() {
+                            CommonMarkViewer::new().show(
+                                ui,
+                                &mut self.markdown_cache,
+                                &self.result,
+                            );
+                        } else if !self.is_loading && self.error_message.is_none() {
+                            ui.vertical_centered(|ui| {
+                                ui.add_space(50.0);
+                                ui.label("Enter a word and click Query, or press Enter");
+                            });
+                        }
+                        if self.is_loading {
+                            ui.add_space(8.0);
+                            ui.horizontal(|ui| {
+                                ui.spinner();
+                                ui.label("Querying...");
+                            });
+                        }
                     });
-                });
-            }
-        });
+            });
     }
 }

@@ -59,11 +59,12 @@ fn main() -> Result<()> {
         .to_string();
 
     // Create application
-    let app = app::RDictApp::new(config, clipboard_text);
+    let app = app::RDictApp::new(config, args.debug, clipboard_text);
 
     // Run GUI
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
+            .with_app_id("rdict")
             .with_inner_size([500.0, 600.0])
             .with_min_inner_size([400.0, 300.0]),
         ..Default::default()
@@ -75,33 +76,6 @@ fn main() -> Result<()> {
         Box::new(|cc| {
             // Setup Chinese font support
             setup_fonts(&cc.egui_ctx);
-
-            // Set larger font sizes
-            let mut style = (*cc.egui_ctx.style()).clone();
-            style.text_styles = [
-                (
-                    egui::TextStyle::Heading,
-                    egui::FontId::new(28.0, egui::FontFamily::Proportional),
-                ),
-                (
-                    egui::TextStyle::Body,
-                    egui::FontId::new(18.0, egui::FontFamily::Proportional),
-                ),
-                (
-                    egui::TextStyle::Monospace,
-                    egui::FontId::new(16.0, egui::FontFamily::Monospace),
-                ),
-                (
-                    egui::TextStyle::Button,
-                    egui::FontId::new(16.0, egui::FontFamily::Proportional),
-                ),
-                (
-                    egui::TextStyle::Small,
-                    egui::FontId::new(14.0, egui::FontFamily::Proportional),
-                ),
-            ]
-            .into();
-            cc.egui_ctx.set_style(style);
 
             Ok(Box::new(app))
         }),
