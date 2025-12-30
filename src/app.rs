@@ -25,7 +25,7 @@ impl RDictApp {
             input_word: initial_word.clone(),
             result: String::new(),
             is_loading: false,
-            is_debug: is_debug,
+            is_debug,
             error_message: None,
             result_receiver: None,
             markdown_cache: CommonMarkCache::default(),

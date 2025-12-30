@@ -16,17 +16,15 @@ fn load_font_by_name(name: &str, lang: Option<&str>) -> Option<Vec<u8>> {
 
 #[cfg(unix)]
 fn find_proportional_font() -> Option<Vec<u8>> {
-    load_font_by_name(DEFAULT_FONT, None).map(|data| {
+    load_font_by_name(DEFAULT_FONT, None).inspect(|_| {
         debug!("Loaded proportional font {}", DEFAULT_FONT);
-        data
     })
 }
 
 #[cfg(unix)]
 fn find_monospace_font() -> Option<Vec<u8>> {
-    load_font_by_name(DEFAULT_MONO_FONT, None).map(|data| {
+    load_font_by_name(DEFAULT_MONO_FONT, None).inspect(|_| {
         debug!("Loaded monospace font ({})", DEFAULT_MONO_FONT);
-        data
     })
 }
 
@@ -73,7 +71,6 @@ pub fn setup_fonts(ctx: &egui::Context) {
     } else {
         warn!("No CJK font found, CJK characters may not display correctly");
     }
-
 
     // Load Inter font as proportional font
     if let Some(font_data) = find_proportional_font() {
