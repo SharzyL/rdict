@@ -120,6 +120,11 @@ impl eframe::App for RDictApp {
             ctx.set_debug_on_hover(true);
         }
 
+        // Close app on Escape key
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+
         // Main panel
         egui::CentralPanel::default()
             .frame(egui::Frame::central_panel(&ctx.style()).inner_margin(egui::Margin::same(12)))
