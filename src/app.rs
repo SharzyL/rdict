@@ -116,6 +116,7 @@ impl eframe::App for RDictApp {
         }
 
         if self.is_debug {
+            #[cfg(debug_assertions)]
             ctx.set_debug_on_hover(true);
         }
 
