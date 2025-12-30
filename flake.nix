@@ -61,7 +61,6 @@
         version = null;
         src = null;
 
-        # https://github.com/NixOS/nixpkgs/issues/214945
         nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ (with pkgs; [
           clippy
         ]);

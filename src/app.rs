@@ -3,6 +3,8 @@ use crate::config::Config;
 use anyhow::Result;
 use eframe::egui;
 use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use tracing::{debug, warn};
 
@@ -14,6 +16,7 @@ pub struct RDictApp {
     is_debug: bool,
     error_message: Option<String>,
     result_receiver: Option<Receiver<Result<String>>>,
+    cancel_token: Option<Arc<AtomicBool>>,
     markdown_cache: CommonMarkCache,
     first_frame: bool,
 }
@@ -28,6 +31,7 @@ impl RDictApp {
             is_debug,
             error_message: None,
             result_receiver: None,
+            cancel_token: None,
             markdown_cache: CommonMarkCache::default(),
             first_frame: true,
         };
@@ -56,6 +60,12 @@ impl RDictApp {
             return;
         }
 
+        // Cancel previous query if it exists
+        if let Some(token) = &self.cancel_token {
+            debug!("Cancelling previous query");
+            token.store(true, Ordering::Relaxed);
+        }
+
         self.is_loading = true;
         self.error_message = None;
         self.result.clear();
@@ -65,7 +75,16 @@ impl RDictApp {
         let (sender, receiver): (Sender<Result<String>>, Receiver<Result<String>>) = channel();
         self.result_receiver = Some(receiver);
 
-        api::query_word_stream(self.config.clone(), self.input_word.clone(), sender);
+        // Create new cancel token for this query
+        let cancel_token = Arc::new(AtomicBool::new(false));
+        self.cancel_token = Some(cancel_token.clone());
+
+        api::query_word_stream(
+            self.config.clone(),
+            self.input_word.clone(),
+            sender,
+            cancel_token,
+        );
     }
 
     fn check_result(&mut self) {
@@ -147,7 +166,7 @@ impl eframe::App for RDictApp {
                         self.start_query();
                     }
 
-                    let button_enabled = !self.is_loading && !self.input_word.trim().is_empty();
+                    let button_enabled = !self.input_word.trim().is_empty();
                     if ui
                         .add_enabled(button_enabled, egui::Button::new("Query"))
                         .clicked()
@@ -183,7 +202,7 @@ impl eframe::App for RDictApp {
                             ui.add_space(8.0);
                             ui.horizontal(|ui| {
                                 ui.spinner();
-                                ui.label("Querying...");
+                                ui.label("Generating...");
                             });
                         }
                     });

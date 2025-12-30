@@ -2,6 +2,8 @@ use crate::config::Config;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{debug, warn};
 
 #[derive(Debug, Serialize)]
@@ -69,9 +71,10 @@ pub fn query_word_stream(
     config: Config,
     word: String,
     sender: std::sync::mpsc::Sender<Result<String>>,
+    cancel_token: Arc<AtomicBool>,
 ) {
     std::thread::spawn(move || {
-        let result = query_word_stream_impl(&config, &word, &sender);
+        let result = query_word_stream_impl(&config, &word, &sender, &cancel_token);
         if let Err(e) = result {
             let _ = sender.send(Err(e));
         }
@@ -82,6 +85,7 @@ fn query_word_stream_impl(
     config: &Config,
     word: &str,
     sender: &std::sync::mpsc::Sender<Result<String>>,
+    cancel_token: &Arc<AtomicBool>,
 ) -> Result<()> {
     debug!(
         "Streaming query for word: {} with model: {}",
@@ -131,6 +135,12 @@ fn query_word_stream_impl(
     let mut accumulated = String::new();
 
     for line in reader.lines() {
+        // Check for cancellation - exit silently without error
+        if cancel_token.load(Ordering::Relaxed) {
+            debug!("Query cancelled for word: {}", word);
+            return Ok(());
+        }
+
         let line = line.context("failed to read stream line")?;
 
         // Skip empty lines

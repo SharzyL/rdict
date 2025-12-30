@@ -2,6 +2,8 @@ use crate::api;
 use crate::config::Config;
 use anyhow::Result;
 use std::io::{self, Write};
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::channel;
 use termimad::MadSkin;
 use termimad::crossterm::style::{Color, Stylize};
@@ -19,7 +21,8 @@ pub fn run(config: Config, word: String) -> Result<()> {
     println!("{} {}\n", "Querying:".magenta(), word.clone().bold());
 
     let (sender, receiver) = channel();
-    api::query_word_stream(config, word, sender);
+    let cancel_token = Arc::new(AtomicBool::new(false));
+    api::query_word_stream(config, word, sender, cancel_token);
 
     let skin = make_skin();
     let mut printed_lines = 0;
