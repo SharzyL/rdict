@@ -164,6 +164,7 @@ impl eframe::App for RDictApp {
                     // Query on Enter key
                     if query_box.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         self.start_query();
+                        query_box.request_focus();
                     }
 
                     let button_enabled = !self.input_word.trim().is_empty();
