@@ -134,16 +134,16 @@ impl eframe::App for RDictApp {
                     let text_edit = egui::TextEdit::singleline(&mut self.input_word)
                         .hint_text("Enter word to query...");
 
-                    let query = ui.add_sized([ui.available_width() - 70.0, 24.0], text_edit);
+                    let query_box = ui.add_sized([ui.available_width() - 70.0, 24.0], text_edit);
 
                     // Request focus on first frame
                     if self.first_frame {
-                        query.request_focus();
+                        query_box.request_focus();
                         self.first_frame = false;
                     }
 
                     // Query on Enter key
-                    if query.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if query_box.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         self.start_query();
                     }
 

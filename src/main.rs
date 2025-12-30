@@ -1,5 +1,6 @@
 mod api;
 mod app;
+mod cli;
 mod config;
 mod fonts;
 
@@ -25,6 +26,14 @@ struct Args {
     /// Suppress info and debug logs, only show warnings and errors
     #[arg(short, long)]
     quiet: bool,
+
+    /// Run in CLI mode (terminal interface instead of GUI)
+    #[arg(long)]
+    cli: bool,
+
+    /// Word to query (used with --cli flag, defaults to clipboard content)
+    #[arg(value_name = "WORD")]
+    word: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -50,16 +59,27 @@ fn main() -> Result<()> {
     // Load configuration
     let config = config::Config::load_from_path(args.config)?;
 
-    // Get word from clipboard
-    let clipboard_text = Clipboard::new()
-        .ok()
-        .and_then(|mut cb| cb.get_text().ok())
-        .unwrap_or_default()
-        .trim()
-        .to_string();
+    // Get word from argument or clipboard
+    let word = args.word.unwrap_or_else(|| {
+        Clipboard::new()
+            .ok()
+            .and_then(|mut cb| cb.get_text().ok())
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    });
 
+    // Run in CLI or GUI mode
+    if args.cli {
+        cli::run(config, word)
+    } else {
+        run_gui(config, args.debug, word)
+    }
+}
+
+fn run_gui(config: config::Config, is_debug: bool, initial_word: String) -> Result<()> {
     // Create application
-    let app = app::RDictApp::new(config, args.debug, clipboard_text);
+    let app = app::RDictApp::new(config, is_debug, initial_word);
 
     // Run GUI
     let options = eframe::NativeOptions {

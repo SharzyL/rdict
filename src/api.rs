@@ -42,7 +42,7 @@ fn build_system_prompt(response_language: &str) -> String {
 When a user enters a word or phrase (in any language), respond with the following content:
 
 ## Pronunciation
-Provide International Phonetic Alphabet (IPA) notation, and hiragana spelling if the input is Japanese.
+Provide International Phonetic Alphabet (IPA) notation, and hiragana spelling if the input is Japanese. If the query is in {language}, you should also provide IPA in {language}.
 
 ## Definition
 Provide definitions in {language}, following dictionary standards with comprehensive definition lists.
@@ -60,7 +60,7 @@ If a user enters a sentence or a paragraph of text, just translate it into {lang
 
 If the input does not seem to be a valid word or paragraph, politely prompt the user to enter valid content. Otherwise do not attach any additional message.
 
-Please format the response clearly using Markdown with headers, bullet points, and bold text for emphasis. All explanatory text should be in {language}."#,
+Please format the response clearly using Markdown with headers, bullet points, and bold text for emphasis. Note that all text should be in {language}, not the query language."#,
         language = response_language
     )
 }
