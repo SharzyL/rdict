@@ -52,7 +52,7 @@
             patchelf --add-rpath ${passthru.lib_path} $out/bin/${name}
           '';
 
-          cargoHash = "sha256-U4rtaw64UalVaPHF5wOvKmMtRvC3XmLXkr1K7E+KnTE=";
+          cargoHash = "sha256-veCtkuj1ZMrENsTNNzTe+LikWsj1KwmsFwVaBzLNJxM=";
           meta.mainProgram = name;
         };
 
