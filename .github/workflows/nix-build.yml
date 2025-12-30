@@ -2,9 +2,9 @@ name: Nix build and check
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ goshujin, dev ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ goshujin, dev ]
 
 jobs:
   nix-check:
